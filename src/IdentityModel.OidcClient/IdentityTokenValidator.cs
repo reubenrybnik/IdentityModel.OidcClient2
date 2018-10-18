@@ -159,7 +159,7 @@ namespace IdentityModel.OidcClient
 
                 foreach (var webKey in _options.ProviderInformation.KeySet.Keys)
                 {
-                    // todo: only supports RSA keys right now
+                    // todo: only supports RSA keys and symmetric keys right now
                     if (webKey.E.IsPresent() && webKey.N.IsPresent())
                     {
                         // only add keys used for signatures
@@ -169,6 +169,22 @@ namespace IdentityModel.OidcClient
                             var n = Base64Url.Decode(webKey.N);
 
                             var key = new RsaSecurityKey(new RSAParameters { Exponent = e, Modulus = n });
+                            key.KeyId = webKey.Kid;
+
+                            keys.Add(key);
+
+                            _logger.LogDebug("Added signing key with kid: {kid}", key?.KeyId ?? "not set");
+                        }
+                    }
+                    // see https://tools.ietf.org/html/rfc7518#section-6.4.1 - Parameters for Symmetric Keys
+                    else if (webKey.Kty == "oct" && webKey.K.IsPresent())
+                    {
+                        // only add keys used for signatures
+                        if (webKey.Use == "sig" || webKey.Use == null)
+                        {
+                            var k = Base64Url.Decode(webKey.K);
+
+                            var key = new SymmetricSecurityKey(k);
                             key.KeyId = webKey.Kid;
 
                             keys.Add(key);
