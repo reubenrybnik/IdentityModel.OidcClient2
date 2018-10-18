@@ -46,6 +46,17 @@ namespace IdentityModel.OidcClient.Tests.Infrastructure
             return key;
         }
 
+        public static SymmetricSecurityKey CreateSymmetricKey()
+        {
+            var cryptoRandom = new CryptoRandom();
+            var keyBytes = new byte[100];
+            cryptoRandom.NextBytes(keyBytes);
+
+            var key = new SymmetricSecurityKey(keyBytes);
+            key.KeyId = "2";
+            return key;
+        }
+
         public static IdentityModel.Jwk.JsonWebKeySet CreateKeySet(params SecurityKey[] keys)
         {
             var set = new IdentityModel.Jwk.JsonWebKeySet();
