@@ -16,7 +16,7 @@ namespace IdentityModel.OidcClient.Tests.Infrastructure
     {
         public static string UntrustedIdentityToken = "eyJhbGciOiJSUzI1NiIsImtpZCI6Ijk4RDNBQ0YwNTcyOTlDMzc0NTA0NEJFOTE4OTg2QUQ3RUQwQUQ0QTIiLCJ0eXAiOiJKV1QiLCJ4NXQiOiJtTk9zOEZjcG5EZEZCRXZwR0pocTEtMEsxS0kifQ.eyJuYmYiOjE0ODQyOTc1MjksImV4cCI6MTQ4NDI5NzgyOSwiaXNzIjoiaHR0cHM6Ly9kZW1vLmlkZW50aXR5c2VydmVyLmlvIiwiYXVkIjoibmF0aXZlLmh5YnJpZCIsIm5vbmNlIjoiMjcwODQ5YjYwZjllZTJhOTA4NjAwZTdkZmIyMzE5NTUiLCJpYXQiOjE0ODQyOTc1MjksImF0X2hhc2giOiJRMmV5b3BkbktIc1QxY0VTbHdscTNRIiwic2lkIjoiOWZkYzRiMmJkNGMwY2M5MDE2NmRkMzZmYmZhMGY0MWYiLCJzdWIiOiI4ODQyMTExMyIsImF1dGhfdGltZSI6MTQ4NDI5NzUyOCwiaWRwIjoibG9jYWwiLCJhbXIiOlsicHdkIl19.jlGE9Lh5ZpU2Kne5-l9bMpJpUMUBUBDukKcIfK62h24ArI4QxVlG5mQPG0_vRRZYMtZDtkk78NDTttH5k0o21igvWAtoApxHGZv4NvnriVEWOFTidlPSRrcB77o__Gv0fnngSIJ03bENxRkZHEcTBP312kJk2khy-8kSvykYNhh0HFvkCKa8oGHu0Q_DJQH1xZIKqoTbPCzGQSLuqObNmg6Xkvg4h38MHOh1LIEt1PPhYkCJSBA6fceqtmv95hXwPTi4DY4-OwRpvm-_FHQvnjEfRPyltus_fJKijWIVSNWKqvZxxGG2hvBFsBgnvLu6L5mqfqQiOJYQDWhtenuMjg";
 
-        public static RsaSecurityKey CreateKey()
+        public static RsaSecurityKey CreateRsaKey()
         {
             var rsa = RSA.Create();
 
@@ -46,27 +46,49 @@ namespace IdentityModel.OidcClient.Tests.Infrastructure
             return key;
         }
 
-        public static IdentityModel.Jwk.JsonWebKeySet CreateKeySet(RsaSecurityKey key)
+        public static IdentityModel.Jwk.JsonWebKeySet CreateKeySet(params SecurityKey[] keys)
         {
-            var parameters = key.Rsa?.ExportParameters(false) ?? key.Parameters;
-            var exponent = Base64Url.Encode(parameters.Exponent);
-            var modulus = Base64Url.Encode(parameters.Modulus);
-
-            var webKey = new IdentityModel.Jwk.JsonWebKey
-            { 
-                Kty = "RSA",
-                Use = "sig",
-                Kid = key.KeyId,
-                E = exponent,
-                N = modulus,
-            };
-
             var set = new IdentityModel.Jwk.JsonWebKeySet();
-            set.Keys.Add(webKey);
+
+            foreach (var key in keys)
+            {
+                if (key is RsaSecurityKey rsaKey)
+                {
+                    var parameters = rsaKey.Rsa?.ExportParameters(false) ?? rsaKey.Parameters;
+                    var exponent = Base64Url.Encode(parameters.Exponent);
+                    var modulus = Base64Url.Encode(parameters.Modulus);
+
+                    var webKey = new IdentityModel.Jwk.JsonWebKey
+                    {
+                        Kty = "RSA",
+                        Use = "sig",
+                        Kid = rsaKey.KeyId,
+                        E = exponent,
+                        N = modulus,
+                    };
+
+                    set.Keys.Add(webKey);
+                }
+                else if (key is SymmetricSecurityKey symmetricKey)
+                {
+                    var k = Base64Url.Encode(symmetricKey.Key);
+
+                    var webKey = new IdentityModel.Jwk.JsonWebKey
+                    {
+                        Kty = "oct",
+                        Use = "sig",
+                        Kid = symmetricKey.KeyId,
+                        K = k
+                    };
+
+                    set.Keys.Add(webKey);
+                }
+            }
+
             return set;
         }
 
-        public static string CreateJwt(RsaSecurityKey key, string issuer, string audience, params Claim[] claims)
+        public static string CreateJwt(SigningCredentials signingCredentials, string issuer, string audience, params Claim[] claims)
         {
             var jwtClaims = new List<Claim>(claims);
             jwtClaims.Add(new Claim(JwtClaimTypes.IssuedAt, "now"));
@@ -77,7 +99,7 @@ namespace IdentityModel.OidcClient.Tests.Infrastructure
                 jwtClaims,
                 DateTime.UtcNow,
                 DateTime.UtcNow.AddHours(1),
-                new SigningCredentials(key, "RS256"));
+                signingCredentials);
 
             var handler = new JwtSecurityTokenHandler();
             handler.OutboundClaimTypeMap.Clear();
