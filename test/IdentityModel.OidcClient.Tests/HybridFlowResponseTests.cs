@@ -3,14 +3,15 @@
 
 
 using FluentAssertions;
-using IdentityModel.Jwk;
 using IdentityModel.OidcClient.Tests.Infrastructure;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Net;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Xunit;
+using JsonWebKeySet = IdentityModel.Jwk.JsonWebKeySet;
 
 namespace IdentityModel.OidcClient.Tests
 {
@@ -53,15 +54,16 @@ namespace IdentityModel.OidcClient.Tests
             var client = new OidcClient(_options);
             var state = await client.PrepareLoginAsync();
 
-            var key = Crypto.CreateKey();
-            var frontChannelJwt = Crypto.CreateJwt(key, "https://authority", "client",
+            var key = Crypto.CreateRsaKey();
+            var signingCredentials = new SigningCredentials(key, "RS256");
+            var frontChannelJwt = Crypto.CreateJwt(signingCredentials, "https://authority", "client",
                 new Claim("sub", "123"),
                 new Claim("nonce", state.Nonce),
                 new Claim("c_hash", Crypto.HashData("code")));
             
             var url = $"?state={state.State}&nonce={state.Nonce}&code=code&id_token={frontChannelJwt}";
             
-            var backChannelJwt = Crypto.CreateJwt(key, "https://authority", "client",
+            var backChannelJwt = Crypto.CreateJwt(signingCredentials, "https://authority", "client",
                 new Claim("at_hash", Crypto.HashData("token")),
                 new Claim("sub", "123"),
                 new Claim("nonce", state.Nonce));
@@ -91,15 +93,16 @@ namespace IdentityModel.OidcClient.Tests
             var client = new OidcClient(_options);
             var state = await client.PrepareLoginAsync();
 
-            var key = Crypto.CreateKey();
-            var frontChannelJwt = Crypto.CreateJwt(key, "https://authority", "client",
+            var key = Crypto.CreateRsaKey();
+            var signingCredentials = new SigningCredentials(key, "RS256");
+            var frontChannelJwt = Crypto.CreateJwt(signingCredentials, "https://authority", "client",
                 new Claim("sub", "123"),
                 new Claim("nonce", state.Nonce),
                 new Claim("c_hash", Crypto.HashData("code")));
 
             var url = $"?state={state.State}&nonce={state.Nonce}&code=code&id_token={frontChannelJwt}";
 
-            var backChannelJwt = Crypto.CreateJwt(key, "https://authority", "client",
+            var backChannelJwt = Crypto.CreateJwt(signingCredentials, "https://authority", "client",
                 new Claim("at_hash", Crypto.HashData("token")),
                 new Claim("sub", "123"),
                 new Claim("nonce", state.Nonce));
@@ -141,10 +144,11 @@ namespace IdentityModel.OidcClient.Tests
             var client = new OidcClient(_options);
             var state = await client.PrepareLoginAsync();
 
-            var key = Crypto.CreateKey();
+            var key = Crypto.CreateRsaKey();
+            var signingCredentials = new SigningCredentials(key, "RS256");
             _options.ProviderInformation.KeySet = Crypto.CreateKeySet(key);
 
-            var frontChannelJwt = Crypto.CreateJwt(key, "https://authority", "client",
+            var frontChannelJwt = Crypto.CreateJwt(signingCredentials, "https://authority", "client",
                 new Claim("sub", "123"),
                 new Claim("nonce", "invalid"),
                 new Claim("c_hash", Crypto.HashData("code")));
@@ -163,10 +167,11 @@ namespace IdentityModel.OidcClient.Tests
             var client = new OidcClient(_options);
             var state = await client.PrepareLoginAsync();
 
-            var key = Crypto.CreateKey();
+            var key = Crypto.CreateRsaKey();
+            var signingCredentials = new SigningCredentials(key, "RS256");
             _options.ProviderInformation.KeySet = Crypto.CreateKeySet(key);
 
-            var frontChannelJwt = Crypto.CreateJwt(key, "https://authority", "client",
+            var frontChannelJwt = Crypto.CreateJwt(signingCredentials, "https://authority", "client",
                 new Claim("sub", "123"),
                 new Claim("c_hash", Crypto.HashData("code")));
 
@@ -184,10 +189,11 @@ namespace IdentityModel.OidcClient.Tests
             var client = new OidcClient(_options);
             var state = await client.PrepareLoginAsync();
 
-            var key = Crypto.CreateKey();
+            var key = Crypto.CreateRsaKey();
+            var signingCredentials = new SigningCredentials(key, "RS256");
             _options.ProviderInformation.KeySet = Crypto.CreateKeySet(key);
 
-            var frontChannelJwt = Crypto.CreateJwt(key, "https://authority", "client",
+            var frontChannelJwt = Crypto.CreateJwt(signingCredentials, "https://authority", "client",
                 new Claim("sub", "123"),
                 new Claim("nonce", state.Nonce),
                 new Claim("c_hash", "invalid"));
@@ -208,14 +214,15 @@ namespace IdentityModel.OidcClient.Tests
             var client = new OidcClient(_options);
             var state = await client.PrepareLoginAsync();
 
-            var key = Crypto.CreateKey();
-            var frontChannelJwt = Crypto.CreateJwt(key, "https://authority", "client",
+            var key = Crypto.CreateRsaKey();
+            var signingCredentials = new SigningCredentials(key, "RS256");
+            var frontChannelJwt = Crypto.CreateJwt(signingCredentials, "https://authority", "client",
                 new Claim("sub", "123"),
                 new Claim("nonce", state.Nonce));
 
             var url = $"?state={state.State}&nonce={state.Nonce}&code=code&id_token={frontChannelJwt}";
 
-            var backChannelJwt = Crypto.CreateJwt(key, "https://authority", "client",
+            var backChannelJwt = Crypto.CreateJwt(signingCredentials, "https://authority", "client",
                 new Claim("at_hash", Crypto.HashData("token")),
                 new Claim("sub", "123"),
                 new Claim("nonce", state.Nonce));
@@ -254,15 +261,16 @@ namespace IdentityModel.OidcClient.Tests
             var client = new OidcClient(_options);
             var state = await client.PrepareLoginAsync();
 
-            var key = Crypto.CreateKey();
-            var frontChannelJwt = Crypto.CreateJwt(key, "https://authority", "client",
+            var key = Crypto.CreateRsaKey();
+            var signingCredentials = new SigningCredentials(key, "RS256");
+            var frontChannelJwt = Crypto.CreateJwt(signingCredentials, "https://authority", "client",
                 new Claim("sub", "123"),
                 new Claim("nonce", state.Nonce),
                 new Claim("c_hash", Crypto.HashData("code")));
 
             var url = $"?state={state.State}&nonce={state.Nonce}&code=code&id_token={frontChannelJwt}";
 
-            var backChannelJwt = Crypto.CreateJwt(key, "https://authority", "client",
+            var backChannelJwt = Crypto.CreateJwt(signingCredentials, "https://authority", "client",
                 new Claim("at_hash", Crypto.HashData("token")),
                 new Claim("sub", "456"),
                 new Claim("nonce", state.Nonce));

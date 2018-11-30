@@ -3,16 +3,16 @@
 
 
 using FluentAssertions;
-using IdentityModel.Jwk;
 using IdentityModel.OidcClient.Tests.Infrastructure;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Xunit;
+using JsonWebKeySet = IdentityModel.Jwk.JsonWebKeySet;
 
 namespace IdentityModel.OidcClient.Tests
 {
@@ -43,8 +43,9 @@ namespace IdentityModel.OidcClient.Tests
             var state = await client.PrepareLoginAsync();
 
             var url = $"?state={state.State}&nonce={state.Nonce}&code=bar";
-            var key = Crypto.CreateKey();
-            var idToken = Crypto.CreateJwt(key, "https://authority", "client",
+            var key = Crypto.CreateRsaKey();
+            var signingCredentials = new SigningCredentials(key, "RS256");
+            var idToken = Crypto.CreateJwt(signingCredentials, "https://authority", "client",
                 new Claim("at_hash", Crypto.HashData("token")),
                 new Claim("sub", "123"),
                 new Claim("nonce", state.Nonce));
@@ -78,8 +79,9 @@ namespace IdentityModel.OidcClient.Tests
             _options.Policy.ValidateTokenIssuerName = false;
 
             var url = $"?state={state.State}&nonce={state.Nonce}&code=bar";
-            var key = Crypto.CreateKey();
-            var idToken = Crypto.CreateJwt(key, "https://{some_multi_tenant_name}", "client",
+            var key = Crypto.CreateRsaKey();
+            var signingCredentials = new SigningCredentials(key, "RS256");
+            var idToken = Crypto.CreateJwt(signingCredentials, "https://{some_multi_tenant_name}", "client",
                 new Claim("at_hash", Crypto.HashData("token")),
                 new Claim("sub", "123"),
                 new Claim("nonce", state.Nonce));
@@ -110,8 +112,9 @@ namespace IdentityModel.OidcClient.Tests
             var state = await client.PrepareLoginAsync();
 
             var url = $"?state={state.State}&nonce={state.Nonce}&code=bar";
-            var key = Crypto.CreateKey();
-            var idToken = Crypto.CreateJwt(key, "https://authority", "client",
+            var key = Crypto.CreateRsaKey();
+            var signingCredentials = new SigningCredentials(key, "RS256");
+            var idToken = Crypto.CreateJwt(signingCredentials, "https://authority", "client",
                 new Claim("at_hash", Crypto.HashData("token")),
                 new Claim("sub", "123"),
                 new Claim("nonce", state.Nonce));
@@ -153,8 +156,9 @@ namespace IdentityModel.OidcClient.Tests
             var state = await client.PrepareLoginAsync();
 
             var url = $"?state={state.State}&nonce={state.Nonce}&code=bar";
-            var key = Crypto.CreateKey();
-            var idToken = Crypto.CreateJwt(key, "https://authority", "client",
+            var key = Crypto.CreateRsaKey();
+            var signingCredentials = new SigningCredentials(key, "RS256");
+            var idToken = Crypto.CreateJwt(signingCredentials, "https://authority", "client",
                 new Claim("at_hash", Crypto.HashData("token")),
                 new Claim("sub", "123"),
                 new Claim("nonce", "invalid"));
@@ -183,8 +187,9 @@ namespace IdentityModel.OidcClient.Tests
             var state = await client.PrepareLoginAsync();
 
             var url = $"?state={state.State}&nonce={state.Nonce}&code=bar";
-            var key = Crypto.CreateKey();
-            var idToken = Crypto.CreateJwt(key, "https://authority", "client",
+            var key = Crypto.CreateRsaKey();
+            var signingCredentials = new SigningCredentials(key, "RS256");
+            var idToken = Crypto.CreateJwt(signingCredentials, "https://authority", "client",
                 new Claim("at_hash", Crypto.HashData("token")),
                 new Claim("sub", "123"));
 
@@ -324,7 +329,7 @@ namespace IdentityModel.OidcClient.Tests
                 { "refresh_token", "refresh_token" }
             };
 
-            _options.ProviderInformation.KeySet = Crypto.CreateKeySet(Crypto.CreateKey());
+            _options.ProviderInformation.KeySet = Crypto.CreateKeySet(Crypto.CreateRsaKey());
             _options.BackchannelHandler = new NetworkHandler(JsonConvert.SerializeObject(tokenResponse), HttpStatusCode.OK);
             
             var client = new OidcClient(_options);
@@ -346,8 +351,9 @@ namespace IdentityModel.OidcClient.Tests
             var state = await client.PrepareLoginAsync();
 
             var url = $"?state={state.State}&nonce={state.Nonce}&code=bar";
-            var key = Crypto.CreateKey();
-            var idToken = Crypto.CreateJwt(key, "https://authority", "client",
+            var key = Crypto.CreateRsaKey();
+            var signingCredentials = new SigningCredentials(key, "RS256");
+            var idToken = Crypto.CreateJwt(signingCredentials, "https://authority", "client",
                 new Claim("sub", "123"),
                 new Claim("nonce", state.Nonce));
                 
@@ -388,8 +394,9 @@ namespace IdentityModel.OidcClient.Tests
             var state = await client.PrepareLoginAsync();
 
             var url = $"?state={state.State}&nonce={state.Nonce}&code=bar";
-            var key = Crypto.CreateKey();
-            var idToken = Crypto.CreateJwt(key, "https://authority", "client",
+            var key = Crypto.CreateRsaKey();
+            var signingCredentials = new SigningCredentials(key, "RS256");
+            var idToken = Crypto.CreateJwt(signingCredentials, "https://authority", "client",
                 new Claim("at_hash", "invalid"),
                 new Claim("sub", "123"),
                 new Claim("nonce", state.Nonce));
@@ -419,8 +426,9 @@ namespace IdentityModel.OidcClient.Tests
             var state = await client.PrepareLoginAsync();
 
             var url = $"?state={state.State}&code=bar";
-            var key = Crypto.CreateKey();
-            var idToken = Crypto.CreateJwt(key, "https://authority", "client",
+            var key = Crypto.CreateRsaKey();
+            var signingCredentials = new SigningCredentials(key, "RS256");
+            var idToken = Crypto.CreateJwt(signingCredentials, "https://authority", "client",
                 new Claim("at_hash", Crypto.HashData("token")),
                 new Claim("sub", "123"));
 
