@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace IdentityModel.OidcClient
@@ -180,6 +181,13 @@ namespace IdentityModel.OidcClient
                     {
                         _logger.LogDebug("Signing key with kid: {kid} currently not supported", webKey.Kid ?? "not set");
                     }
+                }
+
+                if (!string.IsNullOrEmpty(_options.ClientSecret) &&
+                    _options.UseClientSecretForIdTokenValidation)
+                {
+                    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.ClientSecret));
+                    keys.Add(key);
                 }
 
                 parameters.IssuerSigningKeys = keys;

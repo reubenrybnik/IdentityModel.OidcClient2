@@ -49,6 +49,16 @@ namespace IdentityModel.OidcClient
         public string ClientSecret { get; set; }
 
         /// <summary>
+        /// Gets or sets whether or not to use the client secret to validate id tokens. This setting should only be used if
+        /// <see cref="Policy.ValidSignatureAlgorithms"/> includes a symmetric algorithm like HS256. If this is true, option
+        /// <see cref="ClientSecret"/> must be provided.
+        /// </summary>
+        /// <value>
+        /// <c>true</c> if the client secret should be used for id token validation, otherwise false.
+        /// </value>
+        public bool UseClientSecretForIdTokenValidation { get; set; }
+
+        /// <summary>
         /// Gets or sets the scopes (required).
         /// </summary>
         /// <value>
